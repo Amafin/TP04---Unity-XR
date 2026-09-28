@@ -15,10 +15,16 @@ public class ShotGun : MonoBehaviour
     public GameObject bulletPrefab;
 
     [Tooltip("Force d'éjection de la balle")]
-    [SerializeField] private float bulletSpeed = 50f;
+    [SerializeField] private float bulletSpeed = 3f;
 
     [Tooltip("Temps en secondes avant que la balle disparaisse")]
     [SerializeField] private float bulletLifetime = 4f;
+
+    [Tooltip("Échelle finale de la balle (valeur absolue)")]
+    [SerializeField] private Vector3 bulletScale = new Vector3(0.8f, 0.8f, 0.8f);
+
+    [Tooltip("Décalage de rotation pour aligner le modèle 3D de la balle avec le canon")]
+    [SerializeField] private Vector3 bulletRotationOffset = new Vector3(90f, 0f, 0f);
 
     private XRGrabInteractable grabInteractable;
 
@@ -68,22 +74,29 @@ public class ShotGun : MonoBehaviour
         // 1. Définir le point et la rotation de sortie
         Transform spawnPoint = barrelLocation != null ? barrelLocation : transform;
 
-        // 2. Instancier la balle avec l'orientation exacte du canon
-        GameObject bullet = Instantiate(bulletPrefab, spawnPoint.position, spawnPoint.rotation);
+        // 2. Instancier la balle orientée selon le canon (+ décalage du modèle)
+        Quaternion bulletRotation = spawnPoint.rotation * Quaternion.Euler(bulletRotationOffset);
+        GameObject bullet = Instantiate(bulletPrefab, spawnPoint.position, bulletRotation);
 
-        // 3. Ignorer la collision entre l'arme et la balle
-        Collider gunCollider = GetComponent();
-        Collider bulletCollider = bullet.GetComponent();
+        // 3. Redimensionner la balle
+        bullet.transform.localScale = bulletScale;
+
+        // 4. Détruire la balle après bulletLifetime secondes
+        Destroy(bullet, bulletLifetime);
+
+        // 5. Ignorer la collision entre l'arme et la balle
+        Collider gunCollider = GetComponent<Collider>();
+        Collider bulletCollider = bullet.GetComponent<Collider>();
         if (gunCollider != null && bulletCollider != null)
         {
             Physics.IgnoreCollision(gunCollider, bulletCollider);
         }
 
-        // 4. Donner la vitesse vers l'avant du canon
-        Rigidbody rb = bullet.GetComponent();
+        // 6. Donner la vitesse vers l'avant du canon
+        Rigidbody rb = bullet.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            // Utilise linearVelocity (Unity 6) ou velocity (versions antérieures)
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             rb.linearVelocity = spawnPoint.forward * bulletSpeed;
         }
     }
