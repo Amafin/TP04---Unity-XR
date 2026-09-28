@@ -66,6 +66,10 @@ public class SimpleShootXR : MonoBehaviour
         {
             gunAnimator.SetTrigger("Fire");
         }
+
+        // Déclenche le tir même sans Animation Event
+        Shoot();
+        CasingRelease();
     }
 
     // Méthode alternative si vous préférez lier l'événement manuellement via l'Inspector
