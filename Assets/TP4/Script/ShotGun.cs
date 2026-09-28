@@ -53,6 +53,7 @@ public class ShotGun : MonoBehaviour
 
     private void OnActivated(ActivateEventArgs args)
     {
+        Debug.Log("Gâchette pressée !");
         Shoot();
     }
 
@@ -64,21 +65,26 @@ public class ShotGun : MonoBehaviour
             return;
         }
 
-        // 1. Instancier la balle à la position et orientation du canon
-        GameObject bullet = Instantiate(bulletPrefab, barrelLocation.position, barrelLocation.rotation);
+        // 1. Définir le point et la rotation de sortie
+        Transform spawnPoint = barrelLocation != null ? barrelLocation : transform;
 
-        // 2. Récupérer ou ajouter un Rigidbody pour la physique
-        Rigidbody rb = bullet.GetComponent<Rigidbody>();
-        if (rb == null)
+        // 2. Instancier la balle avec l'orientation exacte du canon
+        GameObject bullet = Instantiate(bulletPrefab, spawnPoint.position, spawnPoint.rotation);
+
+        // 3. Ignorer la collision entre l'arme et la balle
+        Collider gunCollider = GetComponent();
+        Collider bulletCollider = bullet.GetComponent();
+        if (gunCollider != null && bulletCollider != null)
         {
-            rb = bullet.AddComponent<Rigidbody>();
+            Physics.IgnoreCollision(gunCollider, bulletCollider);
         }
 
-        // 3. Propulser la balle vers l'avant (axe Z du canon)
-        // Sur Unity 6, linearVelocity remplace velocity
-        rb.linearVelocity = barrelLocation.forward * bulletSpeed;
-
-        // 4. Détruire la balle après un certain délai
-        Destroy(bullet, bulletLifetime);
+        // 4. Donner la vitesse vers l'avant du canon
+        Rigidbody rb = bullet.GetComponent();
+        if (rb != null)
+        {
+            // Utilise linearVelocity (Unity 6) ou velocity (versions antérieures)
+            rb.linearVelocity = spawnPoint.forward * bulletSpeed;
+        }
     }
 }
